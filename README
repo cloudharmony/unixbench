@@ -1,0 +1,27 @@
+UnixBench Benchmark
+
+This repository contains the setup and runtime configurations for the UnixBench 
+benchmark. UnixBench is the original BYTE UNIX benchmark suite, updated and 
+revised by many people over the years. The purpose of UnixBench is to provide a 
+basic indicator of the performance of a Unix-like system; hence, multiple tests 
+are used to test various aspects of the system's performance. These test 
+results are then compared to the scores from a baseline system to produce an 
+index value, which is generally easier to handle than the raw scores. The 
+entire set of index values is then combined to make an overall index for the 
+system. For more information, review the project website:
+
+https://code.google.com/p/byte-unixbench/
+
+RUNTIME PARAMETERS
+None
+
+
+RESULT METRICS
+multicore_copies          The number of UnixBench copies used to produce the 
+                          multicore_score metric
+                          
+multicore_score           UnixBench multiple copy/multicore score (produced for 
+                          compute instances with > 1 core)
+
+score                     UnixBench single copy score. This metric is always 
+                          produced

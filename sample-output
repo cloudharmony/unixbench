@@ -1,0 +1,173 @@
+gcc -o ./pgms/arithoh -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Darithoh ./src/arith.c
+gcc -o ./pgms/register -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum='register int' ./src/arith.c
+gcc -o ./pgms/short -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum=short ./src/arith.c
+gcc -o ./pgms/int -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum=int ./src/arith.c
+gcc -o ./pgms/long -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum=long ./src/arith.c
+gcc -o ./pgms/float -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum=float ./src/arith.c
+gcc -o ./pgms/double -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -Ddatum=double ./src/arith.c
+gcc -o ./pgms/hanoi -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/hanoi.c
+gcc -o ./pgms/syscall -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/syscall.c
+./src/syscall.c: In function ‘main’:
+./src/syscall.c:93:21: warning: null argument where non-null required (argument 2) [-Wnonnull]
+gcc -o ./pgms/context1 -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/context1.c
+gcc -o ./pgms/pipe -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/pipe.c
+gcc -o ./pgms/spawn -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/spawn.c
+gcc -o ./pgms/execl -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/execl.c
+In file included from ./src/execl.c:34:0:
+./src/big.c: In function ‘getwork’:
+./src/big.c:452:11: warning: variable ‘c’ set but not used [-Wunused-but-set-variable]
+cd ./src; gcc -c -DTIME -Wall -pedantic -ansi -DHZ= -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall dhry_1.c
+cd ./src; gcc -c -DTIME -Wall -pedantic -ansi -DHZ= -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall dhry_2.c
+gcc -o ./pgms/dhry2 -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/dhry_1.o ./src/dhry_2.o
+cd ./src; rm -f dhry_1.o dhry_2.o
+cd ./src; gcc -c -DTIME -Wall -pedantic -ansi -DREG=register -DHZ= -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall dhry_1.c -o dhry_1_reg.o
+cd ./src; gcc -c -DTIME -Wall -pedantic -ansi -DREG=register -DHZ= -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall dhry_2.c -o dhry_2_reg.o
+gcc -o ./pgms/dhry2reg -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/dhry_1_reg.o ./src/dhry_2_reg.o
+cd ./src; rm -f dhry_1_reg.o dhry_2_reg.o
+gcc -o ./pgms/looper -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/looper.c
+gcc -o ./pgms/fstime -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall ./src/fstime.c
+gcc -o ./pgms/whetstone-double -DTIME -Wall -pedantic -ansi -O2 -fomit-frame-pointer -fforce-addr -ffast-math -Wall -DDP -DUNIX -DUNIXBENCH ./src/whets.c -lm
+make all
+make[1]: Entering directory `/home/cloudbench/UnixBench'
+Checking distribution of files
+./pgms  exists
+./src  exists
+./testdir  exists
+./results  exists
+make[1]: Leaving directory `/home/cloudbench/UnixBench'
+sh: 1: 3dinfo: not found
+sh: 1: runlevel: not found
+
+   #    #  #    #  #  #    #          #####   ######  #    #   ####   #    #
+   #    #  ##   #  #   #  #           #    #  #       ##   #  #    #  #    #
+   #    #  # #  #  #    ##            #####   #####   # #  #  #       ######
+   #    #  #  # #  #    ##            #    #  #       #  # #  #       #    #
+   #    #  #   ##  #   #  #           #    #  #       #   ##  #    #  #    #
+    ####   #    #  #  #    #          #####   ######  #    #   ####   #    #
+
+   Version 5.1.3                      Based on the Byte Magazine Unix Benchmark
+
+   Multi-CPU version                  Version 5 revisions by Ian Smith,
+                                      Sunnyvale, CA, USA
+   January 13, 2011                   johantheghost at yahoo period com
+
+
+1 x Dhrystone 2 using register variables  1 2 3 4 5 6 7 8 9 10
+
+1 x Double-Precision Whetstone  1 2 3 4 5 6 7 8 9 10
+
+1 x Execl Throughput  1 2 3
+
+1 x File Copy 1024 bufsize 2000 maxblocks  1 2 3
+
+1 x File Copy 256 bufsize 500 maxblocks  1 2 3
+
+1 x File Copy 4096 bufsize 8000 maxblocks  1 2 3
+
+1 x Pipe Throughput  1 2 3 4 5 6 7 8 9 10
+
+1 x Pipe-based Context Switching  1 2 3 4 5 6 7 8 9 10
+
+1 x Process Creation  1 2 3
+
+1 x System Call Overhead  1 2 3 4 5 6 7 8 9 10
+
+1 x Shell Scripts (1 concurrent)  1 2 3
+
+1 x Shell Scripts (8 concurrent)  1 2 3
+
+16 x Dhrystone 2 using register variables  1 2 3 4 5 6 7 8 9 10
+
+16 x Double-Precision Whetstone  1 2 3 4 5 6 7 8 9 10
+
+16 x Execl Throughput  1 2 3
+
+16 x File Copy 1024 bufsize 2000 maxblocks  1 2 3
+
+16 x File Copy 256 bufsize 500 maxblocks  1 2 3
+
+16 x File Copy 4096 bufsize 8000 maxblocks  1 2 3
+
+16 x Pipe Throughput  1 2 3 4 5 6 7 8 9 10
+
+16 x Pipe-based Context Switching  1 2 3 4 5 6 7 8 9 10
+
+16 x Process Creation  1 2 3
+
+16 x System Call Overhead  1 2 3 4 5 6 7 8 9 10
+
+16 x Shell Scripts (1 concurrent)  1 2 3
+
+16 x Shell Scripts (8 concurrent)  1 2 3
+
+   CPU 14: Intel(R) Xeon(R) CPU @ 2.60GHz (5200.0 bogomips)
+          x86-64, MMX, Physical Address Ext, SYSENTER/SYSEXIT, SYSCALL/SYSRET
+   CPU 15: Intel(R) Xeon(R) CPU @ 2.60GHz (5200.0 bogomips)
+          x86-64, MMX, Physical Address Ext, SYSENTER/SYSEXIT, SYSCALL/SYSRET
+   04:08:10 up 1 day, 25 min,  1 user,  load average: 0.77, 2.95, 1.89; runlevel 
+
+------------------------------------------------------------------------
+Benchmark Run: Thu Apr 17 2014 04:08:10 - 04:36:14
+16 CPUs in system; running 1 parallel copy of tests
+
+Dhrystone 2 using register variables       40242315.2 lps   (10.0 s, 7 samples)
+Double-Precision Whetstone                     4397.4 MWIPS (10.0 s, 7 samples)
+Execl Throughput                               3691.1 lps   (29.8 s, 2 samples)
+File Copy 1024 bufsize 2000 maxblocks       1117324.5 KBps  (30.0 s, 2 samples)
+File Copy 256 bufsize 500 maxblocks          319711.2 KBps  (30.0 s, 2 samples)
+File Copy 4096 bufsize 8000 maxblocks       2491601.5 KBps  (30.0 s, 2 samples)
+Pipe Throughput                             2616045.2 lps   (10.0 s, 7 samples)
+Pipe-based Context Switching                  37559.7 lps   (10.0 s, 7 samples)
+Process Creation                               9500.1 lps   (30.0 s, 2 samples)
+Shell Scripts (1 concurrent)                  10519.3 lpm   (60.0 s, 2 samples)
+Shell Scripts (8 concurrent)                   4952.7 lpm   (60.0 s, 2 samples)
+System Call Overhead                        4269836.8 lps   (10.0 s, 7 samples)
+
+System Benchmarks Index Values               BASELINE       RESULT    INDEX
+Dhrystone 2 using register variables         116700.0   40242315.2   3448.4
+Double-Precision Whetstone                       55.0       4397.4    799.5
+Execl Throughput                                 43.0       3691.1    858.4
+File Copy 1024 bufsize 2000 maxblocks          3960.0    1117324.5   2821.5
+File Copy 256 bufsize 500 maxblocks            1655.0     319711.2   1931.8
+File Copy 4096 bufsize 8000 maxblocks          5800.0    2491601.5   4295.9
+Pipe Throughput                               12440.0    2616045.2   2102.9
+Pipe-based Context Switching                   4000.0      37559.7     93.9
+Process Creation                                126.0       9500.1    754.0
+Shell Scripts (1 concurrent)                     42.4      10519.3   2481.0
+Shell Scripts (8 concurrent)                      6.0       4952.7   8254.6
+System Call Overhead                          15000.0    4269836.8   2846.6
+                                                                   ========
+System Benchmarks Index Score                                        1673.1
+
+------------------------------------------------------------------------
+Benchmark Run: Thu Apr 17 2014 04:36:14 - 05:04:33
+16 CPUs in system; running 16 parallel copies of tests
+
+Dhrystone 2 using register variables      307139447.3 lps   (10.0 s, 7 samples)
+Double-Precision Whetstone                    56869.2 MWIPS (9.8 s, 7 samples)
+Execl Throughput                              33540.8 lps   (30.0 s, 2 samples)
+File Copy 1024 bufsize 2000 maxblocks        545902.6 KBps  (30.0 s, 2 samples)
+File Copy 256 bufsize 500 maxblocks          149419.6 KBps  (30.0 s, 2 samples)
+File Copy 4096 bufsize 8000 maxblocks       1428646.8 KBps  (30.0 s, 2 samples)
+Pipe Throughput                            23484594.4 lps   (10.0 s, 7 samples)
+Pipe-based Context Switching                2167383.9 lps   (10.0 s, 7 samples)
+Process Creation                              73036.8 lps   (30.0 s, 2 samples)
+Shell Scripts (1 concurrent)                  69486.2 lpm   (60.0 s, 2 samples)
+Shell Scripts (8 concurrent)                   9564.1 lpm   (60.0 s, 2 samples)
+System Call Overhead                        7864343.0 lps   (10.0 s, 7 samples)
+
+System Benchmarks Index Values               BASELINE       RESULT    INDEX
+Dhrystone 2 using register variables         116700.0  307139447.3  26318.7
+Double-Precision Whetstone                       55.0      56869.2  10339.8
+Execl Throughput                                 43.0      33540.8   7800.2
+File Copy 1024 bufsize 2000 maxblocks          3960.0     545902.6   1378.5
+File Copy 256 bufsize 500 maxblocks            1655.0     149419.6    902.8
+File Copy 4096 bufsize 8000 maxblocks          5800.0    1428646.8   2463.2
+Pipe Throughput                               12440.0   23484594.4  18878.3
+Pipe-based Context Switching                   4000.0    2167383.9   5418.5
+Process Creation                                126.0      73036.8   5796.6
+Shell Scripts (1 concurrent)                     42.4      69486.2  16388.2
+Shell Scripts (8 concurrent)                      6.0       9564.1  15940.2
+System Call Overhead                          15000.0    7864343.0   5242.9
+                                                                   ========
+System Benchmarks Index Score                                        6460.3
