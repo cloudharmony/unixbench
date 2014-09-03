@@ -21,7 +21,7 @@
 require_once(dirname(__FILE__) . '/UnixBenchTest.php');
 require_once(dirname(__FILE__) . '/save/BenchmarkDb.php');
 $status = 1;
-$args = parse_args(array('v' => 'verbose'));
+$args = parse_args(array('nostore_html', 'nostore_log', 'nostore_text', 'v' => 'verbose'));
 
 // get result directories => each directory stores 1 iteration of results
 $dirs = array();
@@ -40,16 +40,17 @@ if ($db =& BenchmarkDb::getDb()) {
     if ($results = $test->getResults()) {
       $results['iteration'] = $iteration;
       print_msg(sprintf('Saving results in directory %s', $dir), isset($args['verbose']), __FILE__, __LINE__);
-      // save report.pdf and report.zip
-      foreach(array('unixbench.txt') as $file) {
+      foreach(array('nostore_html' => 'unixbench.html', 'nostore_log' => 'unixbench.log', 'nostore_text' => 'unixbench.txt') as $arg => $file) {
         $file = sprintf('%s/%s', $dir, $file);
-        if (file_exists($file)) {
-          $col = 'unixbench_report';
+        if (!isset($args[$arg]) && file_exists($file)) {
+          $pieces = explode('_', $arg);
+          $col = sprintf('results_%s', $pieces[count($pieces) - 1]);
           $saved = $db->saveArtifact($file, $col);
           if ($saved) print_msg(sprintf('Saved %s successfully', basename($file)), isset($args['verbose']), __FILE__, __LINE__);
           else if ($saved === NULL) print_msg(sprintf('Unable to save %s', basename($file)), isset($args['verbose']), __FILE__, __LINE__, TRUE);
         }
-        else print_msg(sprintf('%s will not be saved because it does not exist', basename($file)), isset($args['verbose']), __FILE__, __LINE__);
+        else if (file_exists($file)) print_msg(sprintf('Artifact %s will not be saved because --%s was set', basename($file), $arg), isset($args['verbose']), __FILE__, __LINE__);
+        else print_msg(sprintf('Artifact %s is missing', basename($file)), isset($args['verbose']), __FILE__, __LINE__, TRUE);
       }
       if ($db->addRow('unixbench', $results)) print_msg(sprintf('Successfully saved test results'), isset($args['verbose']), __FILE__, __LINE__);
       else print_msg(sprintf('Failed to save test results'), isset($args['verbose']), __FILE__, __LINE__, TRUE);

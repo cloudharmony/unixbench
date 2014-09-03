@@ -110,6 +110,12 @@ line delimited config file located in ~/.ch_benchmark (e.g. db_host=localhost)
                             PostgreSQL, the permissions are the same except 
                             that the user needs copy permissions in place of
                             MySQL load data infile
+                            
+--nostore_html              Do not store HTML UnixBench reports
+
+--nostore_log               Do not store UnixBench log
+
+--nostore_text              Do not store text UnixBench reports
 
 --output                    The output directory to use for writing CSV files.
                             If not specified, the current working directory 

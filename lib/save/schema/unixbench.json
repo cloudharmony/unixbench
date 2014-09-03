@@ -23,9 +23,11 @@
   {"name": "multicore_copies", "type": "tinyint unsigned"},
   {"name": "multicore_score", "type": "float unsigned"},
   {"name": "score", "type": "float unsigned"},
+  {"name": "results_html", "type": "char(255)"},
+  {"name": "results_log", "type": "char(255)"},
+  {"name": "results_text", "type": "char(255)"},
   {"name": "test_started", "type": "timestamp"},
   {"name": "test_stopped", "type": "timestamp"},
-  {"name": "unixbench_report", "type": "char(255)"},
   {"name": "compute_service_idx", "type": "index", "cols": ["meta_compute_service_id", "meta_instance_id", "meta_storage_config", "meta_region"]},
   {"name": "provider_idx", "type": "index", "cols": ["meta_provider_id", "meta_compute_service_id", "meta_instance_id"]},
   {"name": "test_idx", "type": "index", "modifier": "unique", "cols": ["meta_test_id", "meta_resource_id", "meta_run_id", "test_started", "test_stopped"]}

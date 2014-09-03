@@ -30,14 +30,19 @@ class UnixBenchTest {
   const UNIX_BENCH_TEST_OPTIONS_FILE_NAME = '.options';
   
   /**
-   * name of the file stream scaling output is written to
+   * name of the file unixbench output is written to
    */
-  const UNIX_BENCH_TEST_FILE_NAME = 'unixbench.txt';
+  const UNIX_BENCH_TEST_FILE_NAME = 'unixbench.out';
   
   /**
-   * name of the file stream scaling output is written to
+   * name of the file unixbench output is written to
    */
-  const UNIX_BENCH_TEST_ERR_FILE = '/tmp/unixbench.err';
+  const UNIX_BENCH_TEST_ERR_FILE = 'unixbench.err';
+  
+  /**
+   * name of the file unixbench status is written to
+   */
+  const UNIX_BENCH_TEST_EXIT_FILE = 'unixbench.status';
   
   /**
    * optional results directory object was instantiated for
@@ -79,6 +84,18 @@ class UnixBenchTest {
       fclose($fp);
       $ended = TRUE;
     }
+    // get log, html and text output files from results directory
+    if ($d = dir(sprintf('%s/results', $this->options['unixbench_dir']))) {
+      while (FALSE !== ($entry = $d->read())) {
+        if (preg_match('/\-/', $entry)) {
+          if (preg_match('/log$/', $entry)) exec(sprintf('mv %s/%s %s/unixbench.log', $this->options['unixbench_dir'], $entry, $this->options['output']));
+          else if (preg_match('/html$/', $entry)) exec(sprintf('mv %s/%s %s/unixbench.html', $this->options['unixbench_dir'], $entry, $this->options['output']));
+          else exec(sprintf('mv %s/%s %s/unixbench.txt', $this->options['unixbench_dir'], $entry, $this->options['output']));
+        }
+      }
+      $d->close();
+    }
+    exec(sprintf('rm -f %s/results/*', $this->options['unixbench_dir']));
     
     return $ended;
   }
@@ -161,7 +178,7 @@ class UnixBenchTest {
   }
   
   /**
-   * initiates stream scaling testing. returns TRUE on success, FALSE otherwise
+   * initiates unixbench testing. returns TRUE on success, FALSE otherwise
    * @return boolean
    */
   public function test() {
@@ -169,29 +186,27 @@ class UnixBenchTest {
     $this->getRunOptions();
     
     $this->options['test_started'] = date('Y-m-d H:i:s');
-    $handle = popen($cmd = sprintf('cd %s;./Run 2>%s', $this->options['unixbench_dir'], self::UNIX_BENCH_TEST_ERR_FILE), 'r');
-    if ($handle && ($line = fgets($handle))) {
-      if ($fp = fopen($ofile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_FILE_NAME), 'w')) {
-        $printReport = FALSE;
-        $success = TRUE;
-        printf("%s", $line);
-        while(!feof($handle)) {
-          $line = fread($handle, 1);
-          if (preg_match('/#    #/', $line)) $printReport = TRUE;
-          printf("%s", $line);
-          if ($printReport) fwrite($fp, sprintf("%s", $line));
-        }
-        fclose($fp);
-      }
-      else print_msg(sprintf('Unable to open file pointer to %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
-      fclose($handle);
+    exec(sprintf('rm -f %s/results/*', $this->options['unixbench_dir']));
+    $ofile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_FILE_NAME);
+    $efile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_ERR_FILE);
+    $xfile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_EXIT_FILE);
+    passthru($cmd = sprintf('cd %s;./Run | tee %s 2>%s;echo $? > %s', $this->options['unixbench_dir'], $ofile, $efile, $xfile));
+    $ecode = trim(file_get_contents($xfile));
+    $ecode = strlen($ecode) && is_numeric($ecode) ? $ecode*1 : NULL;
+    unlink($xfile);
+    if (file_exists($efile) && filesize($efile)) {
+      print_msg(sprintf('Unable run UnixBench using command %s - exit code %d', $cmd, $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+      print_msg(trim(file_get_contents($efile)), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+      unlink($efile);
+    }
+    else if (file_exists($ofile) && $ecode === 0) {
+      $success = TRUE;
+      print_msg(sprintf('UnixBench test finished - results written to %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__);
+      // get results
       $this->endTest();
     }
-    else {
-      print_msg(sprintf('Unable initiate command %s', $cmd), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
-      if (file_exists(self::UNIX_BENCH_TEST_ERR_FILE)) print_msg(trim(file_get_contents(self::UNIX_BENCH_TEST_ERR_FILE)), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
-    }
-    if (file_exists(self::UNIX_BENCH_TEST_ERR_FILE)) unlink(self::UNIX_BENCH_TEST_ERR_FILE);
+    else print_msg(sprintf('UnixBench failed to run - exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+    if (file_exists($efile)) unlink($efile);
     
     return $success;
   }
@@ -234,6 +249,7 @@ class UnixBenchTest {
       if (!file_exists($run = sprintf('%s/Run', $this->options['unixbench_dir'])) || !is_executable($run)) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' does not contain Run or Run is not executable';
       else if (!is_dir($pgms = sprintf('%s/pgms', $this->options['unixbench_dir']))) $validated['unixbench_dir'] = 'Required directory ' . $pgms . ' does not exist';
       else if (!file_exists(sprintf('%s/arithoh', $pgms))) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' has not been compiled - run Make all';
+      else if (!is_dir($rdir = sprintf('%s/results', $this->options['unixbench_dir'])) || !is_writable($rdir)) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' is not valid because ' . $rdir . ' is not writable';
       else print_msg(sprintf('UnixBench directory %s is valid', $this->options['unixbench_dir']), isset($this->options['verbose']), __FILE__, __LINE__);
     }
     else $validated['unixbench_dir'] = isset($this->options['unixbench_dir']) ? '--unixbench_dir ' . $this->options['unixbench_dir'] . ' is not valid' : '--unixbench_dir is required';
