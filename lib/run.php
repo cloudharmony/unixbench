@@ -18,6 +18,7 @@
  * run script for UnixBench testing
  */
 require_once(dirname(__FILE__) . '/UnixBenchTest.php');
+
 $test = new UnixBenchTest();
 $options = $test->getRunOptions();
 $verbose = isset($options['verbose']) && $options['verbose'];

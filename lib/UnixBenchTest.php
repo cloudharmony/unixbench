@@ -35,9 +35,14 @@ class UnixBenchTest {
   const UNIX_BENCH_TEST_FILE_NAME = 'unixbench.out';
   
   /**
-   * name of the file unixbench output is written to
+   * name of the file unixbench runtime errors is written to
    */
   const UNIX_BENCH_TEST_ERR_FILE = 'unixbench.err';
+  
+  /**
+   * name of the file unixbench runtime script is written to
+   */
+  const UNIX_BENCH_TEST_RUN_FILE = 'unixbench.run';
   
   /**
    * name of the file unixbench status is written to
@@ -66,6 +71,13 @@ class UnixBenchTest {
   }
   
   /**
+   * clears the UnixBench results directory
+   */
+  private function clearResults() {
+    exec(sprintf('rm -f %s/results/*', $this->options['unixbench_dir']));
+  }
+  
+  /**
    * writes test results and finalizes testing
    * @return boolean
    */
@@ -88,14 +100,13 @@ class UnixBenchTest {
     if ($d = dir(sprintf('%s/results', $this->options['unixbench_dir']))) {
       while (FALSE !== ($entry = $d->read())) {
         if (preg_match('/\-/', $entry)) {
-          if (preg_match('/log$/', $entry)) exec(sprintf('mv %s/%s %s/unixbench.log', $this->options['unixbench_dir'], $entry, $this->options['output']));
-          else if (preg_match('/html$/', $entry)) exec(sprintf('mv %s/%s %s/unixbench.html', $this->options['unixbench_dir'], $entry, $this->options['output']));
-          else exec(sprintf('mv %s/%s %s/unixbench.txt', $this->options['unixbench_dir'], $entry, $this->options['output']));
+          if (preg_match('/log$/', $entry)) exec(sprintf('mv %s/results/%s %s/unixbench.log', $this->options['unixbench_dir'], $entry, $this->options['output']));
+          else if (preg_match('/html$/', $entry)) exec(sprintf('mv %s/results/%s %s/unixbench.html', $this->options['unixbench_dir'], $entry, $this->options['output']));
+          else exec(sprintf('mv %s/results/%s %s/unixbench.txt', $this->options['unixbench_dir'], $entry, $this->options['output']));
         }
       }
       $d->close();
     }
-    exec(sprintf('rm -f %s/results/*', $this->options['unixbench_dir']));
     
     return $ended;
   }
@@ -186,27 +197,83 @@ class UnixBenchTest {
     $this->getRunOptions();
     
     $this->options['test_started'] = date('Y-m-d H:i:s');
-    exec(sprintf('rm -f %s/results/*', $this->options['unixbench_dir']));
+    
+    // clear UnixBench results directory
+    $this->clearResults();
+    
+    // temporary files used for text execution
     $ofile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_FILE_NAME);
     $efile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_ERR_FILE);
     $xfile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_EXIT_FILE);
-    passthru($cmd = sprintf('cd %s;./Run | tee %s 2>%s;echo $? > %s', $this->options['unixbench_dir'], $ofile, $efile, $xfile));
-    $ecode = trim(file_get_contents($xfile));
-    $ecode = strlen($ecode) && is_numeric($ecode) ? $ecode*1 : NULL;
-    unlink($xfile);
-    if (file_exists($efile) && filesize($efile)) {
-      print_msg(sprintf('Unable run UnixBench using command %s - exit code %d', $cmd, $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
-      print_msg(trim(file_get_contents($efile)), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
-      unlink($efile);
-    }
-    else if (file_exists($ofile) && $ecode === 0) {
-      $success = TRUE;
-      print_msg(sprintf('UnixBench test finished - results written to %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__);
-      // get results
-      $this->endTest();
-    }
-    else print_msg(sprintf('UnixBench failed to run - exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+    $rfile = sprintf('%s/%s', $this->options['output'], self::UNIX_BENCH_TEST_RUN_FILE);
+    if (file_exists($ofile)) unlink($ofile);
     if (file_exists($efile)) unlink($efile);
+    if (file_exists($xfile)) unlink($xfile);
+    if (file_exists($rfile)) unlink($rfile);
+    
+    // open runtime file for writing (a bash script generated in this file)
+    // writing this script and forking is a work around for Broken pipe errors
+    // during multi-threaded Pipe-based Context Switching
+    if ($fp = fopen($rfile, 'w')) {
+      // create runs cript
+      fwrite($fp, "#!/bin/bash\n");
+      fwrite($fp, sprintf("cd %s\n", $this->options['unixbench_dir']));
+      fwrite($fp, sprintf("./Run >%s 2>>%s\n", $ofile, $efile));
+      fwrite($fp, sprintf("echo \$? >%s\n", $xfile));
+      fclose($fp);
+      exec(sprintf('chmod 755 %s', $rfile));
+      print_msg(sprintf('Successfully generated runtime file %s - starting UnixBench', $rfile), isset($this->options['verbose']), __FILE__, __LINE__);
+      
+      // fork run script
+      exec(sprintf('%s >/dev/null 2>>%s &', $rfile, $efile));
+      print_msg(sprintf('UnixBench started successfully - polling for completion using exit file %s', $xfile), isset($this->options['verbose']), __FILE__, __LINE__);
+      
+      // wait until exit code written to $xfile
+      $pos = 0;
+      do {
+        sleep(1);
+        $buffer = trim(shell_exec(sprintf('cat %s', $ofile)));
+        if (strlen($buffer) > $pos) {
+          print(substr($buffer, $pos));
+          $pos = strlen($buffer);
+        }
+        $ecode = trim(exec('ps aux | grep Run | grep perl; echo $?'))*1;
+      } while(!file_exists($xfile) && $ecode === 0);
+      
+      // get exit code
+      $ecode = trim(file_get_contents($xfile));
+      $ecode = strlen($ecode) && is_numeric($ecode) ? $ecode*1 : NULL;
+      
+      print_msg(sprintf('UnixBench test finished with exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__);
+      
+      // if UnixBench output included the string "aborting" - an error occurred
+      if (file_exists($ofile) && strpos(file_get_contents($ofile, 'aborting'))) {
+        print_msg(sprintf('UnixBench execution aborted prematurely - check output %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+      }
+      // if UnixBench output produced and exit code is 0 - execution was successful
+      else if (file_exists($ofile) && $ecode === 0) {
+        $success = TRUE;
+        print_msg(sprintf('UnixBench test finished - results written to %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__);
+        // get results
+        $this->endTest();
+      }
+      // if stderr generated output - an error occurred
+      else if (file_exists($efile) && filesize($efile)) {
+        print_msg(sprintf('Unable run UnixBench - exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+        print_msg(trim(file_get_contents($efile)), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+      }
+      // Some other error occurred
+      else print_msg(sprintf('UnixBench failed to run - exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+    }
+    else print_msg(sprintf('UnixBench failed to run - unable to open runtime %s file for writing', $rfile), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
+    
+    // remove temporary files
+    if (file_exists($efile)) unlink($efile);
+    if (file_exists($xfile)) unlink($xfile);
+    if (file_exists($rfile)) unlink($rfile);
+    
+    // clear UnixBench results directory
+    $this->clearResults();
     
     return $success;
   }
