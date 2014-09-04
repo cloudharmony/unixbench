@@ -90,9 +90,9 @@ class BenchmarkDbBigQuery extends BenchmarkDb {
     $response = NULL;
 
     // interpret callback response
-    if (count($output) == 2) {
+    if (count($output) >= 1) {
       $response = json_decode($output[0], TRUE);
-      $ecode = $output[1]*1;
+      $ecode = $output[count($output) - 1]*1;
       if ($ecode) print_msg(sprintf('BigQuery execution failed with exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
       else {
         if (!is_array($response)) $response = array();

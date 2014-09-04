@@ -18,3 +18,8 @@ cd UnixBench
 make all
 cd ~
 git clone git://github.com/cloudharmony/unixbench.git
+
+
+# Setup BigQuery (see save.sh)
+curl https://sdk.cloud.google.com | bash
+gcloud auth login
