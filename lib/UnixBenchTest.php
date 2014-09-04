@@ -31,7 +31,7 @@ class UnixBenchTest {
   /**
    * default UnixBench tests
    */
-  const UNIX_BENCH_TESTS_DEFAULT = 'dhry2reg whetstone-double syscall pipe spawn execl shell1 shell8 shell16 short int long float double arithoh C dc hanoi grep sysexec';
+  const UNIX_BENCH_TESTS_DEFAULT = 'dhry2reg whetstone-double execl fstime fsbuffer fsdisk pipe spawn syscall shell1 shell8';
   
   /**
    * name of the file where serializes options should be written to for given 

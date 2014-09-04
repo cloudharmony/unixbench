@@ -98,6 +98,7 @@ instructions.
                             tests to run. The following tests are included 
                             with UnixBench. Tests run if this parameter is not
                             set have an *:
+                            
                               dhry2reg*
                               whetstone-double*
                               syscall*
@@ -107,27 +108,28 @@ instructions.
                               execl*
                               fstime-w
                               fstime-r
-                              fstime
+                              fstime*
                               fsbuffer-w
                               fsbuffer-r
-                              fsbuffer
+                              fsbuffer*
                               fsdisk-w
                               fsdisk-r
-                              fsdisk
+                              fsdisk*
                               shell1*
                               shell8*
-                              shell16*
-                              short*
-                              int*
-                              long*
-                              float*
-                              double*
-                              arithoh*
-                              C*
-                              dc*
-                              hanoi*
-                              grep*
-                              sysexec*
+                              shell16
+                              short
+                              int
+                              long
+                              float
+                              double
+                              arithoh
+                              C
+                              dc
+                              hanoi
+                              grep
+                              sysexec
+                            
                             This parameter may be repeated to designate 
                             multiple tests (e.g. --test int --test long)
                             NOTE: the 'context1' test may cause pipe broken
