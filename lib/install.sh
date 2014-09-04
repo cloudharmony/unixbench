@@ -1,4 +1,4 @@
 #!/bin/bash
-tar zxvf source.tar.gz
+tar zxf source.tar.gz
 cd UnixBench
 make all

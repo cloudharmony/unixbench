@@ -24,6 +24,16 @@ date_default_timezone_set('UTC');
 class UnixBenchTest {
   
   /**
+   * all of the possible UnixBench tests
+   */
+  const UNIX_BENCH_TESTS = 'dhry2reg whetstone-double syscall pipe context1 spawn execl fstime-w fstime-r fstime fsbuffer-w fsbuffer-r fsbuffer fsdisk-w fsdisk-r fsdisk shell1 shell8 shell16 short int long float double arithoh C dc hanoi grep sysexec';
+  
+  /**
+   * default UnixBench tests
+   */
+  const UNIX_BENCH_TESTS_DEFAULT = 'dhry2reg whetstone-double syscall pipe spawn execl shell1 shell8 shell16 short int long float double arithoh C dc hanoi grep sysexec';
+  
+  /**
    * name of the file where serializes options should be written to for given 
    * test iteration
    */
@@ -118,9 +128,7 @@ class UnixBenchTest {
   public function getResults() {
     $results = NULL;
     if (isset($this->dir) && is_dir($this->dir) && file_exists($ofile = sprintf('%s/%s', $this->dir, self::UNIX_BENCH_TEST_FILE_NAME))) {
-      foreach($this->getRunOptions() as $key => $val) {
-        if (preg_match('/^meta_/', $key) || preg_match('/^test_/', $key)) $results[$key] = $val;
-      }
+      foreach($this->getRunOptions() as $key => $val) $results[$key] = is_array($val) ? implode(' ', $val) : $val;
       if ($handle = popen(sprintf('%s/parse.php %s', dirname(__FILE__), $ofile), 'r')) {
         while(!feof($handle) && ($line = fgets($handle))) {
           if (preg_match('/^([a-z][^=]+)=(.*)$/', $line, $m)) $results[$m[1]] = $m[2];
@@ -149,9 +157,11 @@ class UnixBenchTest {
           'meta_os' => $sysInfo['os_info'],
           'meta_provider' => 'Not Specified',
           'meta_storage_config' => 'Not Specified',
+          'multicore_copies' => $sysInfo['cpu_cores'],
           'output' => trim(shell_exec('pwd'))
         );
         $opts = array(
+          'copies:',
           'meta_compute_service:',
           'meta_compute_service_id:',
           'meta_cpu:',
@@ -165,14 +175,24 @@ class UnixBenchTest {
           'meta_run_id:',
           'meta_storage_config:',
           'meta_test_id:',
+          'nomultithread',
+          'nosinglethread',
           'output:',
+          'test:',
           'v' => 'verbose',
           'unixbench_dir:'
         );
-        $this->options = parse_args($opts); 
+        $this->options = parse_args($opts, array('test')); 
+        if (isset($this->options['test']) && !is_array($this->options['test']) && $this->options['test']) $this->options['test'] = array($this->options['test']);
+        else if (!isset($this->options['test']) || !$this->options['test']) $this->options['test'] = explode(' ', self::UNIX_BENCH_TESTS_DEFAULT);
         foreach($defaults as $key => $val) {
           if (!isset($this->options[$key])) $this->options[$key] = $val;
-        } 
+        }
+        // for single core (or when --multicore_copies 1), set --nomultithread flag
+        if ($this->options['multicore_copies'] == 1) {
+          $this->options['nomultithread'] = TRUE;
+          if (isset($this->options['nosinglethread'])) unset($this->options['nosinglethread']);
+        }
       }
     }
     return $this->options;
@@ -218,15 +238,17 @@ class UnixBenchTest {
       // create runs cript
       fwrite($fp, "#!/bin/bash\n");
       fwrite($fp, sprintf("cd %s\n", $this->options['unixbench_dir']));
-      fwrite($fp, sprintf("./Run >%s 2>>%s\n", $ofile, $efile));
+      // increase copy limit from 16 to 64 (if not already changed)
+      fwrite($fp, "sed -i 's/=> 16/=> 64/g' Run\n");
+      fwrite($fp, sprintf("./Run%s%s %s >%s 2>>%s\n", isset($this->options['nosinglethread']) ? '' : ' -c 1', isset($this->options['nomultithread']) && $this->options['multicore_copies'] > 1 ? '' : ' -c ' . $this->options['multicore_copies'], implode(' ', $this->options['test']), $ofile, $efile));
       fwrite($fp, sprintf("echo \$? >%s\n", $xfile));
       fclose($fp);
       exec(sprintf('chmod 755 %s', $rfile));
       print_msg(sprintf('Successfully generated runtime file %s - starting UnixBench', $rfile), isset($this->options['verbose']), __FILE__, __LINE__);
       
       // fork run script
-      exec(sprintf('%s >/dev/null 2>>%s &', $rfile, $efile));
-      print_msg(sprintf('UnixBench started successfully - polling for completion using exit file %s', $xfile), isset($this->options['verbose']), __FILE__, __LINE__);
+      exec(sprintf('nice -n 0 %s >/dev/null 2>>%s &', $rfile, $efile));
+      print_msg(sprintf('UnixBench started successfully for tests "%s" - polling for completion using exit file %s', implode(' ', $this->options['test']), $xfile), isset($this->options['verbose']), __FILE__, __LINE__);
       
       // wait until exit code written to $xfile
       $pos = 0;
@@ -247,7 +269,7 @@ class UnixBenchTest {
       print_msg(sprintf('UnixBench test finished with exit code %d', $ecode), isset($this->options['verbose']), __FILE__, __LINE__);
       
       // if UnixBench output included the string "aborting" - an error occurred
-      if (file_exists($ofile) && strpos(file_get_contents($ofile, 'aborting'))) {
+      if (file_exists($ofile) && strpos(file_get_contents($ofile), 'aborting')) {
         print_msg(sprintf('UnixBench execution aborted prematurely - check output %s', $ofile), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
       }
       // if UnixBench output produced and exit code is 0 - execution was successful
@@ -287,10 +309,14 @@ class UnixBenchTest {
   public function validateRunOptions() {
     $this->getRunOptions();
     $validate = array(
-      'output' => array('write' => TRUE),
+      'multicore_copies' => array('min' => 1, 'max' => 64),
+      'output' => array('required' => TRUE, 'write' => TRUE),
+      'test' => array('option' => explode(' ', self::UNIX_BENCH_TESTS), 'required' => TRUE)
     );
     $validated = validate_options($this->options, $validate);
     if (!is_array($validated)) $validated = array();
+    // cannot specify both nomultithread and nosinglethread
+    if (isset($this->options['nomultithread']) && isset($this->options['nosinglethread'])) $validated['nomultithread'] = 'Both --nomultithread and --nosinglethread cannot be set';
     
     // look up directory hierarchy for UnixBench directory
     if (!isset($this->options['unixbench_dir'])) {
@@ -315,7 +341,6 @@ class UnixBenchTest {
     if (isset($this->options['unixbench_dir']) && is_dir($this->options['unixbench_dir'])) {
       if (!file_exists($run = sprintf('%s/Run', $this->options['unixbench_dir'])) || !is_executable($run)) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' does not contain Run or Run is not executable';
       else if (!is_dir($pgms = sprintf('%s/pgms', $this->options['unixbench_dir']))) $validated['unixbench_dir'] = 'Required directory ' . $pgms . ' does not exist';
-      else if (!file_exists(sprintf('%s/arithoh', $pgms))) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' has not been compiled - run Make all';
       else if (!is_dir($rdir = sprintf('%s/results', $this->options['unixbench_dir'])) || !is_writable($rdir)) $validated['unixbench_dir'] = '--unixbench_dir ' . $this->options['unixbench_dir'] . ' is not valid because ' . $rdir . ' is not writable';
       else print_msg(sprintf('UnixBench directory %s is valid', $this->options['unixbench_dir']), isset($this->options['verbose']), __FILE__, __LINE__);
     }
