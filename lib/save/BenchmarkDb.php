@@ -109,7 +109,7 @@ class BenchmarkDb {
    */
   public static function &getDb() {
     $db = NULL;
-    $options = parse_args(array('db:', 'db_and_csv:', 'db_callback_header:', 'db_host:', 'db_name:', 'db_port:', 'db_pswd:', 'db_prefix:', 'db_suffix:', 'db_user:', 'output:', 'remove:', 'store:', 'v' => 'verbose'), array('remove'), 'save_');
+    $options = parse_args(array('db:', 'db_and_csv:', 'db_callback_header:', 'db_host:', 'db_mysql_engine:', 'db_name:', 'db_port:', 'db_pswd:', 'db_prefix:', 'db_suffix:', 'db_user:', 'output:', 'remove:', 'store:', 'v' => 'verbose'), array('remove'), 'save_');
     // default table suffix
     if (!isset($options['db_suffix']) && ($ini = get_benchmark_ini()) && isset($ini['meta-version'])) $options['db_suffix'] = '_' . str_replace('.', '_', $ini['meta-version']);
     merge_options_with_config($options, BenchmarkDb::BENCHMARK_DB_CONFIG_FILE);

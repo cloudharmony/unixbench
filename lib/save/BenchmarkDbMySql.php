@@ -47,6 +47,8 @@ class BenchmarkDbMySql extends BenchmarkDb {
         else $query .= sprintf('%s%s %s', $i>0 ? ', ' : '', $col, $schema[$col]['type']);
       }
       $query .= ')';
+      if (isset($this->options['db_mysql_engine'])) $query .= ' ENGINE=' . $this->options['db_mysql_engine'];
+      
       if ($this->mysql($query) !== NULL) {
         print_msg(sprintf('Table %s created successfully - creating indexes', $table), isset($this->options['verbose']), __FILE__, __LINE__);
         $exists = TRUE;
@@ -110,7 +112,7 @@ class BenchmarkDbMySql extends BenchmarkDb {
   protected function validate() {
     if ($valid = parent::validate()) {
       $table = 'test_' . $this->getTableName(rand());
-      if ($this->mysql('create table ' . $table . ' (id int)') !== NULL) {
+      if ($this->mysql(sprintf('CREATE TABLE %s (id int)%s', $table, isset($this->options['db_mysql_engine']) ? ' ENGINE=' . $this->options['db_mysql_engine'] : '')) !== NULL) {
         // try to load some data into the table
         $fp = fopen($tmp = '/tmp/' . $table, 'w');
         fwrite($fp, rand() . "\n" . rand());

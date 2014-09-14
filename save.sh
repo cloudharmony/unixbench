@@ -76,6 +76,11 @@ line delimited config file located in ~/.ch_benchmark (e.g. db_host=localhost)
                               db_name           => the --db_name argument value
                               table             => the table name (including 
                                                    --db_prefix)
+                                                   
+--db_mysql_engine           An optional explicit storage engine to use when 
+                            creating MySQL tables (i.e. if a table does not 
+                            already exist). If not set, the default storage 
+                            engine will be used
                             
 --db_name                   Name of the database where tables should be created 
                             and results stored. For Google BigQuery this should 
