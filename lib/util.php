@@ -330,8 +330,8 @@ function parse_args($opts, $arrayArgs=NULL, $paramPrefix='') {
       unset($options[$short]);
     }
     // check for environment variable
-    if (!isset($options[$key]) && preg_match('/^meta_/', $key) && getenv('bm_' . str_replace('meta_', '', $key))) $options[$key] = getenv('bm_' . str_replace('meta_', '', $key));
-    if (!isset($options[$key]) && getenv("bm_param_${paramPrefix}${key}")) $options[$key] = getenv("bm_param_${paramPrefix}${key}");
+    if (!isset($options[$key]) && preg_match('/^meta_/', $key) && getenv('bm_' . str_replace('meta_', '', $key)) !== FALSE) $options[$key] = getenv('bm_' . str_replace('meta_', '', $key));
+    if (!isset($options[$key]) && getenv("bm_param_${paramPrefix}${key}") !== FALSE) $options[$key] = getenv("bm_param_${paramPrefix}${key}");
     // convert booleans
     if (isset($options[$key]) && !strpos($long, ':')) $options[$key] = $options[$key] === '0' ? FALSE : TRUE;
     // set array parameters
