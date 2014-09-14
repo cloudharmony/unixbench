@@ -175,7 +175,18 @@ class BenchmarkDb {
       foreach($files as $file) {
         if (file_exists($file)) {
           foreach(json_decode(file_get_contents($file), TRUE) as $col) {
-            if (in_array($col['name'], $this->options['remove'])) continue;
+            $remove = FALSE;
+            foreach($this->options['remove'] as $check) {
+              $check = trim($check);
+              if ($check && ($col['name'] == $check || preg_match(sprintf('/^%s$/', str_replace('*', '.*', $check)), $col['name']))) {
+                $remove = TRUE;
+                break;
+              }
+            }
+            if ($remove) {
+              // print_msg(sprintf('Removing column %s from schema because of --remove %s flag', $col['name'], $check), isset($this->options['verbose']), __FILE__, __LINE__);
+              continue;
+            }
             $this->schemas[$table][$col['name']] = $col;
           }
         }

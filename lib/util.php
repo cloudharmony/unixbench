@@ -94,6 +94,35 @@ function get_benchmark_ini() {
 }
 
 /**
+ * returns the free space in MB on the volume containing $dir
+ * @param string $dir the directory to return volume free space for
+ * @return float
+ */
+function get_free_space($dir) {
+  $free = NULL;
+  if (is_dir($dir)) {
+  	$stats = array();
+  	$dfm = shell_exec('df -m');
+  	foreach(explode("\n", $dfm) as $line) {
+  		if (isset($last) && preg_match('/^\s+[0-9]+/', $line)) $line = $last . ' ' . $line;
+  		if (preg_match('/(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/', $line, $m) && is_numeric($m[2]) && is_numeric($m[4]) && is_numeric($m[4])) {
+  			$stats[$m[6]] = array('filesystem' => $m[1], 'free' => $m[4], 'mount' => $m[6], 'size' => $m[3] + $m[4], 'used' => $m[3], 'used_perc' => $m[5]);
+  		}
+  		else if (substr($line, 0, 1) == '/') $last = $line;
+  		else $last = NULL;
+  	}
+		$dmount = '/';
+		foreach(array_keys($stats) as $mountpoint) {
+			if (strpos($dir, $mountpoint) === 0 && strlen($mountpoint) > strlen($dmount)) $dmount = $mountpoint;
+		}
+		$stats = $stats[$dmount];
+  	$free = $stats ? $stats['free'] : NULL;
+  }
+  return $free;
+}
+ 
+
+/**
  * returns the mime type for the $file specified. uses /etc/mime.types
  * @param string $file the file to return the mime type for
  * @return string
@@ -115,6 +144,56 @@ function get_mime_type($file) {
 }
 
 /**
+ * returns all of the parameters prefixed with $prefix. To do so - both command
+ * line arguments and values in env (prefixed with bm_param_$prefix) are 
+ * searched
+ * @param string $prefix the prefix to search for
+ * @return array
+ */
+function get_prefixed_params($prefix) {
+  $params = array();
+	foreach(string_to_hash(shell_exec('env')) as $key => $val) {
+		if (preg_match('/^bm_param_' . $prefix . '(.*)$/', $key, $m)) $params[$m[1]] = trim($val) ? trim($val) : TRUE;
+	}
+  foreach($_SERVER['argv'] as $arg) {
+    if (preg_match('/^\-\-' . $prefix . '(.*)$/', $arg, $m)) {
+      $pieces = explode('=', $m[1]);
+      $params[trim(strtolower($pieces[0]))] = isset($pieces[1]) ? trim($pieces[1]) : TRUE;
+    }
+  }
+  return $params;
+}
+
+/**
+ * computes a standard deviation for the $points specified
+ * @param array $points an array of numeric data points
+ * @param int $type the type of standard deviation metric to return. One of 
+ * the following numeric identifiers:
+ *   1 = sample standard deviation (DEFAULT)
+ *   2 = population standard deviation
+ *   3 = relative sample standard deviation
+ *   4 = relative population standard deviation
+ *   5 = sample variance
+ *   6 = population variance
+ * @param int $round desired rounding precision, default is 6
+ * @access public
+ * @return float
+ */
+function get_std_dev($points, $type=1, $round=6) {
+  if (count($points) == 1) return 0;
+  
+  $mean = array_sum($points)/count($points);
+  $variance = 0.0;
+  foreach ($points as $i) $variance += pow($i - $mean, 2);
+  $variance /= ($type == 1 || $type == 3 || $type == 5 ? count($points) - 1 : count($points));
+	if ($type == 5 || $type == 6) return $variance;
+  $stddev = (float) sqrt($variance);
+	if ($type > 2) $stddev = 100 * ($stddev/$mean);
+	if ($round) $stddev = round($stddev, $round);
+	return $stddev;
+}
+
+/**
  * returns system information. A hash containing the following keys:
  *   cpu        => CPU model information
  *   cpu_cache  => CPU cache size
@@ -122,7 +201,7 @@ function get_mime_type($file) {
  *   cpu_speed  => CPU clock speed (MHz)
  *   hostname   => system hostname
  *   memory_gb  => system memory in gigabytes (rounded to whole number)
- *   memory_bb  => system memory in megabytes (rounded to whole number)
+ *   memory_mb  => system memory in megabytes (rounded to whole number)
  *   os_info    => operating system name and version
  * @return array
  */
@@ -171,6 +250,17 @@ function get_sys_info() {
   return $sys_info;
 }
 
+/**
+ * returns TRUE if the Linux kernel is 64 bit, FALSE otherwise
+ * @return boolean
+ */
+function is_64bit() {
+  global $is_64bit;
+  if (!isset($is_64bit)) {
+    $is_64bit = preg_match('/64/', shell_exec('uname -i')) || preg_match('/64/', shell_exec('uname -m')) || preg_match('/64/', shell_exec('uname -p'));
+  }
+  return $is_64bit;
+}
 
 /**
  * merges config options into $options
@@ -267,8 +357,6 @@ function parse_args($opts, $arrayArgs=NULL, $paramPrefix='') {
 
   return $options;
 }
-
-
   
 /**
  * Prints a message to stdout
@@ -298,6 +386,61 @@ $run_time_start = microtime(TRUE);
 function run_time() {
 	global $run_time_start;
 	return round(microtime(TRUE) - $run_time_start);
+}
+
+/**
+ * this function parses key/value pairs in the string $blob. the return value
+ * is a hash the corresponding key/value pairs. empty lines, or lines 
+ * beginning with ; or # are ignored. for lines without an = character, the 
+ * entire line will be the key and the value will be TRUE
+ * @param string $blob the string to parse
+ * @param boolean $ini if true, the parsing will be segmented where sections 
+ * that begin with a bracket enclosed string define the segments. for example,
+ * if the function encountered a line [globals], all of the key value pairs 
+ * following that line will be placed into a 'global' sub-hash in the return 
+ * value (until the next section is encountered)
+ * @param array $excludeKeys array of regular expressions representing keys
+ * that should not be included in the return hash
+ * @param array $includeKeys array of regular expressions representing keys
+ * that should be included in the return hash
+ */
+function string_to_hash($blob, $ini=FALSE, $excludeKeys=NULL, $includeKeys=NULL) {
+	$hash = array();
+	$iniSection = NULL;
+	foreach(explode("\n", $blob) as $line) {
+		$line = trim($line);
+		$firstChar = $line ? substr($line, 0, 1) : NULL;
+		if ($firstChar && $firstChar != ';' && $firstChar != '#') {
+			// ini section
+			if ($ini && preg_match('/^\[(.*)\]$/', $line, $m)) $iniSection = $m[1];
+			else {
+				if ($split = strpos($line, '=')) {
+					$key = substr($line, 0, $split);
+					$value = substr($line, $split + 1);
+				}
+				else {
+					$key = $line;
+					$value = TRUE;
+				}
+				if (is_array($excludeKeys)) {
+					foreach($excludeKeys as $regex) if (preg_match($regex, $key)) $key = NULL;
+				}
+				if (is_array($includeKeys)) {
+					$found = FALSE;
+					foreach($includeKeys as $regex) if (preg_match($regex, $key)) $found = TRUE;
+					if (!$found) $key = NULL;
+				}
+				if ($key) {
+					if ($ini && $iniSection) {
+						if (!isset($hash[$iniSection])) $hash[$iniSection] = array();
+						$hash[$iniSection][$key] = $value;
+					}
+					else $hash[$key] = $value;
+				}
+			}
+		}
+	}
+	return $hash;
 }
 
 /**
@@ -344,7 +487,7 @@ function validate_dependencies($dependencies) {
  *   max:      argument numeric and <= this value
  *   option:   argument must be found in this value (array)
  *   required: argument is required
- *   write:    argument is in the file syste path and writeable
+ *   write:    argument is in the file system path and writeable
  * @return array
  */
 function validate_options($options, $validate) {

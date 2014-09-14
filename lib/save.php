@@ -48,7 +48,7 @@ if ($db =& BenchmarkDb::getDb()) {
           $saved = $db->saveArtifact($file, $col);
           if ($saved) print_msg(sprintf('Saved %s successfully', basename($file)), isset($args['verbose']), __FILE__, __LINE__);
           else if ($saved === NULL) print_msg(sprintf('Unable to save %s', basename($file)), isset($args['verbose']), __FILE__, __LINE__, TRUE);
-          else print_msg(sprintf('Artifact %s is missing', basename($file)), isset($args['verbose']), __FILE__, __LINE__);
+          else print_msg(sprintf('Artifact %s will not be saved because --store was not specified', basename($file)), isset($args['verbose']), __FILE__, __LINE__);
         }
         else if (file_exists($file)) print_msg(sprintf('Artifact %s will not be saved because --%s was set', basename($file), $arg), isset($args['verbose']), __FILE__, __LINE__);
         else print_msg(sprintf('Artifact %s is missing', basename($file)), isset($args['verbose']), __FILE__, __LINE__, TRUE);

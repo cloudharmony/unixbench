@@ -125,7 +125,7 @@ line delimited config file located in ~/.ch_benchmark (e.g. db_host=localhost)
                             (CSV files or tables). This argument may be 
                             repeated for multiple columns. To define multiple 
                             values in ~/.ch_benchmark, use one line and comma
-                            separated values
+                            separated values. Wildcards are supported
                             
 --store                     Save result artifacts to object storage. The 
                             following argument values are supported:
