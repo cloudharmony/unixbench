@@ -116,6 +116,10 @@ line delimited config file located in ~/.ch_benchmark (e.g. db_host=localhost)
                             that the user needs copy permissions in place of
                             MySQL load data infile
                             
+--iteration                 Explicit iteration number for test results - 
+                            otherwise 1 will be assumed unless results are in 
+                            numbered sub-directories
+                            
 --nostore_html              Do not store HTML UnixBench reports
 
 --nostore_log               Do not store UnixBench log

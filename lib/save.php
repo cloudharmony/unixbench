@@ -21,7 +21,7 @@
 require_once(dirname(__FILE__) . '/UnixBenchTest.php');
 require_once(dirname(__FILE__) . '/save/BenchmarkDb.php');
 $status = 1;
-$args = parse_args(array('nostore_html', 'nostore_log', 'nostore_text', 'v' => 'verbose'));
+$args = parse_args(array('iteration:', 'nostore_html', 'nostore_log', 'nostore_text', 'v' => 'verbose'));
 
 // get result directories => each directory stores 1 iteration of results
 $dirs = array();
@@ -36,7 +36,7 @@ if ($db =& BenchmarkDb::getDb()) {
   // get results from each directory
   foreach($dirs as $i => $dir) {
     $test = new UnixBenchTest($dir);
-    $iteration = $i + 1;
+    $iteration = isset($args['iteration']) && preg_match('/([0-9]+)/', $args['iteration'], $m) ? $m[1]*1 : $i + 1;
     if ($results = $test->getResults()) {
       $results['iteration'] = $iteration;
       print_msg(sprintf('Saving results in directory %s', $dir), isset($args['verbose']), __FILE__, __LINE__);
