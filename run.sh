@@ -47,6 +47,18 @@ the results (see save.sh). UnixBench should be installed and compiled before
 running this benchmark. Review the 'unixbench_dir' parameter comments below
 for instructions.
 
+--collectd_rrd              If set, collectd rrd stats will be captured from 
+                            --collectd_rrd_dir. To do so, when testing starts,
+                            existing directories in --collectd_rrd_dir will 
+                            be renamed to .bak, and upon test completion 
+                            any directories not ending in .bak will be zipped
+                            and saved along with other test artifacts (as 
+                            collectd-rrd.zip). User MUST have sudo privileges
+                            to use this option
+                            
+--collectd_rrd_dir          Location where collectd rrd files are stored - 
+                            default is /var/lib/collectd/rrd
+
 --meta_compute_service      The name of the compute service this test pertains
                             to. May also be specified using the environment 
                             variable bm_compute_service
@@ -94,10 +106,61 @@ for instructions.
 --meta_test_id              Identifier for the test. May also be specified 
                             using the environment variable bm_test_id
                             
+--multicore_copies          Explicit number of copies to test with for 
+                            multi-core testing. The default is # of CPU cores.
+                            This parameter should be a minimum of 2 and maximum 
+                            of 64
+                            
+--nomultithread             Don't run multi-threaded tests
+                            
+--nosinglethread            Don't run single threaded tests
+                            
 --output                    The output directory to use for writing test data 
-                            (results log and triad results graphs). If not 
+                            (results log and unixbench text output). If not 
                             specified, the current working directory will be 
                             used
+                            
+--test                      You may optionally specify individual UnixBench 
+                            tests to run. The following tests are included 
+                            with UnixBench. Tests run if this parameter is not
+                            set have an *:
+                            
+                              dhry2reg*
+                              whetstone-double*
+                              syscall*
+                              pipe*
+                              context1
+                              spawn*
+                              execl*
+                              fstime-w
+                              fstime-r
+                              fstime*
+                              fsbuffer-w
+                              fsbuffer-r
+                              fsbuffer*
+                              fsdisk-w
+                              fsdisk-r
+                              fsdisk*
+                              shell1*
+                              shell8*
+                              shell16
+                              short
+                              int
+                              long
+                              float
+                              double
+                              arithoh
+                              C
+                              dc
+                              hanoi
+                              grep
+                              sysexec
+                            
+                            This parameter may be repeated to designate 
+                            multiple tests (e.g. --test int --test long)
+                            NOTE: the 'context1' test may cause pipe broken
+                            errors. It is excluded by default for this reason.
+                            Graphics tests are also excluded from the list.
                             
 --verbose                   Show verbose output
 
@@ -105,60 +168,17 @@ for instructions.
                             specified, the benchmark run script will look up 
                             the directory tree from both pwd and --output for 
                             presence of a 'UnixBench' directory with an 
-                            executable 'Run' script in it. The test harness 
-                            will check if UnixBench has been compiled already 
-                            by looking in the 'pgms' subdirectory. If it has 
-                            not been compiled, an error message will be 
-                            displayed
+                            executable 'Run' script in it
                             
                             
 DEPENDENCIES
 This benchmark has the following dependencies:
 
-  perl        The UnixBench run script is perl based
-  
-  
-TEST ARTIFACTS
-This benchmark generates the following artifacts:
-
-unixbench.txt      The text based UnixBench report
-
-
-SAVE SCHEMA
-The following columns are included in CSV files/tables generated by save.sh. 
-Indexed MySQL/PostgreSQL columns are identified by *. Columns without 
-descriptions are documented as runtime parameters above. Data types and 
-indexing used is documented in save/schema/*.json
-
-benchmark_version: [benchmark version]
-iteration: [iteration number (used with incremental result directories)]
-meta_compute_service
-meta_compute_service_id*
-meta_cpu: [CPU model info]
-meta_cpu_cache: [CPU cache]
-meta_cpu_cores: [# of CPU cores]
-meta_cpu_speed: [CPU clock speed (MHz)]
-meta_instance_id*
-meta_hostname: [system under test (SUT) hostname]
-meta_memory
-meta_memory_gb: [memory in gigabytes]
-meta_memory_mb: [memory in megabyets]
-meta_os_info: [operating system name and version]
-meta_provider
-meta_provider_id*
-meta_region*
-meta_resource_id
-meta_run_id
-meta_storage_config*
-meta_test_id*
-multicore_copies: the number of UnixBench copies used to produce the 
-                  multicore_score metric
-multicore_score: UnixBench multiple copy/multicore score (produced for compute 
-                 instances with > 1 core)
-score: UnixBench single copy score. This metric is always produced
-test_started*: [when the test started]
-test_stopped: [when the test ended]
-unixbench_report: [URL to the unixbench.txt report (if --store option used)]
+perl        The UnixBench run script is perl based. NOTE: UnixBench makes use
+            of perl-Time-HiRes (HiRes.pm). This package may need to be 
+            installed separately from perl
+php-cli     Test automation scripts (/usr/bin/php)
+zip         Used to compress test artifacts
 
 
 USAGE

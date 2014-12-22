@@ -150,6 +150,7 @@ class UnixBenchTest {
         // default run argument values
         $sysInfo = get_sys_info();
         $defaults = array(
+          'collectd_rrd_dir' => '/var/lib/collectd/rrd',
           'meta_compute_service' => 'Not Specified',
           'meta_cpu' => $sysInfo['cpu'],
           'meta_instance_id' => 'Not Specified',
@@ -161,6 +162,8 @@ class UnixBenchTest {
           'output' => trim(shell_exec('pwd'))
         );
         $opts = array(
+          'collectd_rrd',
+          'collectd_rrd_dir:',
           'copies:',
           'meta_compute_service:',
           'meta_compute_service_id:',
@@ -213,6 +216,7 @@ class UnixBenchTest {
    * @return boolean
    */
   public function test() {
+    $rrdStarted = isset($this->options['collectd_rrd']) ? ch_collectd_rrd_start($this->options['collectd_rrd_dir'], isset($this->options['verbose'])) : FALSE;
     $success = FALSE;
     $this->getRunOptions();
     
@@ -297,6 +301,8 @@ class UnixBenchTest {
     // clear UnixBench results directory
     $this->clearResults();
     
+    if ($rrdStarted) ch_collectd_rrd_stop($this->options['collectd_rrd_dir'], $this->options['output'], isset($this->options['verbose']));
+    
     return $success;
   }
   
@@ -345,6 +351,14 @@ class UnixBenchTest {
       else print_msg(sprintf('UnixBench directory %s is valid', $this->options['unixbench_dir']), isset($this->options['verbose']), __FILE__, __LINE__);
     }
     else $validated['unixbench_dir'] = isset($this->options['unixbench_dir']) ? '--unixbench_dir ' . $this->options['unixbench_dir'] . ' is not valid' : '--unixbench_dir is required';
+    
+    // validate collectd rrd options
+    if (isset($this->options['collectd_rrd'])) {
+      if (!ch_check_sudo()) $validated['collectd_rrd'] = 'sudo privilege is required to use this option';
+      else if (!is_dir($this->options['collectd_rrd_dir'])) $validated['collectd_rrd_dir'] = sprintf('The directory %s does not exist', $this->options['collectd_rrd_dir']);
+      else if ((shell_exec('ps aux | grep collectd | wc -l')*1 < 2)) $validated['collectd_rrd'] = 'collectd is not running';
+      else if ((shell_exec(sprintf('find %s -maxdepth 1 -type d 2>/dev/null | wc -l', $this->options['collectd_rrd_dir']))*1 < 2)) $validated['collectd_rrd_dir'] = sprintf('The directory %s is empty', $this->options['collectd_rrd_dir']);
+    }
     
     return $validated;
   }

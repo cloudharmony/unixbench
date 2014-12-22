@@ -33,6 +33,18 @@ the results (see save.sh). UnixBench should be installed and compiled before
 running this benchmark. Review the 'unixbench_dir' parameter comments below for 
 instructions.
 
+* collectd_rrd              If set, collectd rrd stats will be captured from 
+                            --collectd_rrd_dir. To do so, when testing starts,
+                            existing directories in --collectd_rrd_dir will 
+                            be renamed to .bak, and upon test completion 
+                            any directories not ending in .bak will be zipped
+                            and saved along with other test artifacts (as 
+                            collectd-rrd.zip). User MUST have sudo privileges
+                            to use this option
+                            
+* collectd_rrd_dir          Location where collectd rrd files are stored - 
+                            default is /var/lib/collectd/rrd
+
 * meta_compute_service      The name of the compute service this test pertains
                             to. May also be specified using the environment 
                             variable bm_compute_service
@@ -152,10 +164,13 @@ This benchmark has the following dependencies:
               of perl-Time-HiRes (HiRes.pm). This package may need to be 
               installed separately from perl
   php-cli     Test automation scripts (/usr/bin/php)
+  zip         Used to compress test artifacts
   
   
 TEST ARTIFACTS
 This benchmark generates the following artifacts:
+
+collectd-rrd.zip   collectd RRD files (see --collectd_rrd)
 
 unixbench.html     HTML formatted UnixBench test report
 
@@ -172,6 +187,7 @@ indexing used is documented in save/schema/unixbench.json. Columns can be
 removed using the save.sh --remove parameter
 
 benchmark_version: [benchmark version]
+collectd_rrd: [URL to zip file containing collectd rrd files]
 iteration: [iteration number (used with incremental result directories)]
 meta_compute_service
 meta_compute_service_id*
