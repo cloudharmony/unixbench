@@ -165,6 +165,7 @@ class UnixBenchTest {
           'collectd_rrd',
           'collectd_rrd_dir:',
           'copies:',
+          'meta_burst:',
           'meta_compute_service:',
           'meta_compute_service_id:',
           'meta_cpu:',
