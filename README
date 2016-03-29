@@ -45,6 +45,9 @@ instructions.
 * collectd_rrd_dir          Location where collectd rrd files are stored - 
                             default is /var/lib/collectd/rrd
 
+* meta_burst                If set to 1, designates testing performed in burst 
+                            mode (e.g. Amazon EC2 t-series burst)
+
 * meta_compute_service      The name of the compute service this test pertains
                             to. May also be specified using the environment 
                             variable bm_compute_service
@@ -189,6 +192,7 @@ removed using the save.sh --remove parameter
 benchmark_version: [benchmark version]
 collectd_rrd: [URL to zip file containing collectd rrd files]
 iteration: [iteration number (used with incremental result directories)]
+meta_burst
 meta_compute_service
 meta_compute_service_id*
 meta_cpu: [CPU model info]

@@ -2,6 +2,7 @@
   {"name": "benchmark_version", "type": "char(8)"},
   {"name": "collectd_rrd", "type": "char(255)"},
   {"name": "iteration", "type": "tinyint unsigned"},
+  {"name": "meta_burst", "type": "boolean"},
   {"name": "meta_compute_service", "type": "char(32)"},
   {"name": "meta_compute_service_id", "type": "char(24)"},
   {"name": "meta_cpu", "type": "char(32)"},
