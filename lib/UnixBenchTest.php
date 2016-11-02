@@ -179,6 +179,7 @@ class UnixBenchTest {
           'meta_run_id:',
           'meta_storage_config:',
           'meta_test_id:',
+          'multicore_copies:',
           'nomultithread',
           'nosinglethread',
           'output:',
