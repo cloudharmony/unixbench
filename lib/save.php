@@ -21,7 +21,7 @@
 require_once(dirname(__FILE__) . '/UnixBenchTest.php');
 require_once(dirname(__FILE__) . '/save/BenchmarkDb.php');
 $status = 1;
-$args = parse_args(array('iteration:', 'nostore_html', 'nostore_log', 'nostore_rrd', 'nostore_text', 'v' => 'verbose'));
+$args = parse_args(array('iteration:', 'nostore_html', 'nostore_log', 'nostore_rrd', 'nostore_text', 'v' => 'verbose'), NULL, 'save_');
 
 // get result directories => each directory stores 1 iteration of results
 $dirs = array();
