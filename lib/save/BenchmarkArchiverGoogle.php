@@ -41,7 +41,7 @@ class BenchmarkArchiverGoogle extends BenchmarkArchiver {
    */
   protected function getEndpoint() {
     $endpoint = isset($this->options['store_endpoint']) ? $this->options['store_endpoint'] : BenchmarkArchiverGoogle::DEFAULT_GOOGLE_ENDPOINT;
-    if (!preg_match('/^http/', $endpoint)) $endpoint = isset($this->options['store_insecure']) && $this->options['store_insecure'] ? 'http://' : 'https://' . $endpoint;
+    if (!preg_match('/^http/', $endpoint)) $endpoint = (isset($this->options['store_insecure']) && $this->options['store_insecure'] ? 'http://' : 'https://') . $endpoint;
 
     return $endpoint;
   }

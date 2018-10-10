@@ -67,7 +67,7 @@ class BenchmarkArchiverS3 extends BenchmarkArchiver {
       if ($endpoint) print_msg(sprintf('Got S3 endpoint %s for region %s', $endpoint, $region), isset($this->options['verbose']), __FILE__, __LINE__);
       else print_msg(sprintf('Unable to get S3 endpoint for region %s', $region), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
     }
-    if ($endpoint && !preg_match('/^http/', $endpoint)) $endpoint = isset($this->options['store_insecure']) && $this->options['store_insecure'] ? 'http://' : 'https://' . $endpoint;
+    if ($endpoint && !preg_match('/^http/', $endpoint)) $endpoint = (isset($this->options['store_insecure']) && $this->options['store_insecure'] ? 'http://' : 'https://') . $endpoint;
       
     return $endpoint;
   }
