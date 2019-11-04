@@ -40,6 +40,9 @@ line delimited config file located in ~/.ch_benchmark (e.g. db_host=localhost)
                                             (see https://metrics.librato.com)
                               mysql      => save results to a MySQL db
                               postgresql => save results to a PostgreSQL db
+                              store      => save results to the object storage
+                                            repository as designated by the 
+                                            --store arguments
                             For --db callback HTTP requests will be made to 
                             --db_host. A HEAD request is used for validation, 
                             and POST to submit results where CSV data is 
@@ -261,6 +264,38 @@ the others are not repeated, they will be applied to all submissions
                             specifies an optional prefix to use for the results
                             table. Default table name is the benchmark name 
                             with no prefix
+
+--db_store_path             If --db=store, this (required) argument specifies the 
+                            object storage path under which results CSV files 
+                            should be saved. If this path ends with .csv, then 
+                            the default table name will be ignored. Otherwise, the 
+                            CSV file will be saved in this path with the file name
+                            equal to [table name].csv The following dynamic values 
+                            may be included:
+                              {table}         => the default table name for the CSV 
+                                                 file being uploaded
+                              {date[_format]} => a date string (optionally 
+                                                 formatted per [format] - see
+                                                 http://php.net/manual/en/function.date.php
+                                                 for valid format options - 
+                                                 default format is Y-m-d)
+                              {benchmark}     => benchmark name (block-storage)
+                                                 (meta-id value in benchmark.ini)
+                              {version}       => benchmark version (e.g. 1_0)
+                                                 (meta-version value in benchmark.ini)
+                              {iteration}     => iteration number
+                              {hostname}      => the compute instance hostname
+                              {meta_*}        => any of the meta_* runtime 
+                                                 parameters. If a meta_* value
+                                                 is designated but was not set, 
+                                                 at runtime, it will be removed 
+                                                 from the prefix (including a 
+                                                 trailing /). Spaces are 
+                                                 replaced with _
+                              {rand}          => a random number. Random numbers 
+                                                 are the same for each unique
+                                                 combination of other prefix 
+                                                 values
 
 --db_suffix                 If the --db argument is set, this argument 
                             specifies an optional suffix to use for the results

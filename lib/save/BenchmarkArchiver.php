@@ -96,13 +96,15 @@ abstract class BenchmarkArchiver {
    *                      from the prefix
    *   {rand}          => a random number
    * @param string $file the file to return the URI
+   * @param string $prefix optional alternate prefix to use
    * @return string
    */
-  protected final function getObjectUri($file) {
-    $prefix = isset($this->options['store_prefix']) ? $this->options['store_prefix'] : BenchmarkArchiver::DEFAULT_PREFIX;
+  public final function getObjectUri($file, $prefix=NULL) {
+    $prefix = $prefix ? $prefix : (isset($this->options['store_prefix']) ? $this->options['store_prefix'] : BenchmarkArchiver::DEFAULT_PREFIX);
     if (preg_match_all('/{([^}]+)}/', $prefix, $m)) {
       $ini = get_benchmark_ini();
       $options = file_exists($options = dirname($file) . '/.options') ? unserialize(file_get_contents($options)) : NULL;
+      if (!$options) $options = file_exists($options = dirname($file) . '/1/.options') ? unserialize(file_get_contents($options)) : NULL;
       foreach($m[1] as $value) {
         $sub = '';
         foreach(explode('|', $value) as $check) {
@@ -132,9 +134,11 @@ abstract class BenchmarkArchiver {
   /**
    * saves a file and returns the URL. returns NULL on error
    * @param string $file local path to the file that should be saved
+   * @param string $object optional explicit object path
+   * @param boolean $public whether or not to make the object public
    * @return string
    */
-  public abstract function save($file);
+  public abstract function save($file, $object=NULL, $public=TRUE);
   
   /**
    * validation method - must be implemented by subclasses. Returns TRUE if 
