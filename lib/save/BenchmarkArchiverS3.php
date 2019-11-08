@@ -92,11 +92,18 @@ class BenchmarkArchiverS3 extends BenchmarkArchiver {
    * @param string $container the container to return the URL for
    * @param string $object optional object to include in the URL
    * @param array $params optional URL parameters
+   * @param boolean $pathStyle return PATH style URL?
    * @return string
    */
-  private function getUrl($object=NULL, $params=NULL) {
+  private function getUrl($object=NULL, $params=NULL, $pathStyle=TRUE) {
     $url = $this->getEndpoint();
-    $url = sprintf('%s/%s%s', $url, $this->options['store_container'], $object ? '/' . $object : '');
+    if ($pathStyle) {
+      $url = str_replace('https://', sprintf('https://%s.', $this->options['store_container']), $url);
+      $url = str_replace('http://', sprintf('http://%s.', $this->options['store_container']), $url);
+      $url = sprintf('%s%s', $url, $object ? '/' . $object : '');
+    }
+    else $url = sprintf('%s/%s%s', $url, $this->options['store_container'], $object ? '/' . $object : '');
+    
     if (is_array($params)) {
       foreach(array_keys($params) as $i => $param) {
         $url .= ($i ? '&' : '?') . $param . ($params[$param] ? '=' . $params[$param] : '');
@@ -126,7 +133,7 @@ class BenchmarkArchiverS3 extends BenchmarkArchiver {
       $url = NULL;
       print_msg(sprintf('Upload of file %s to S3 failed', $file), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
     }
-    return $url;
+    return $url && $public ? $this->getUrl($object, NULL, FALSE) : $url;
   }
   
   /**
