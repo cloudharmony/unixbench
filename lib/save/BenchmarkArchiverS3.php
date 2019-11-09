@@ -92,18 +92,11 @@ class BenchmarkArchiverS3 extends BenchmarkArchiver {
    * @param string $container the container to return the URL for
    * @param string $object optional object to include in the URL
    * @param array $params optional URL parameters
-   * @param boolean $pathStyle return PATH style URL?
    * @return string
    */
-  private function getUrl($object=NULL, $params=NULL, $pathStyle=TRUE) {
+  private function getUrl($object=NULL, $params=NULL) {
     $url = $this->getEndpoint();
-    if ($pathStyle) {
-      $url = str_replace('https://', sprintf('https://%s.', $this->options['store_container']), $url);
-      $url = str_replace('http://', sprintf('http://%s.', $this->options['store_container']), $url);
-      $url = sprintf('%s%s', $url, $object ? '/' . $object : '');
-    }
-    else $url = sprintf('%s/%s%s', $url, $this->options['store_container'], $object ? '/' . $object : '');
-    
+    $url = sprintf('%s/%s%s', $url, $this->options['store_container'], $object ? '/' . $object : '');
     if (is_array($params)) {
       foreach(array_keys($params) as $i => $param) {
         $url .= ($i ? '&' : '?') . $param . ($params[$param] ? '=' . $params[$param] : '');
@@ -128,12 +121,19 @@ class BenchmarkArchiverS3 extends BenchmarkArchiver {
     if (isset($this->options['store_public']) && $public) $headers['x-amz-acl'] = 'public-read';
     $headers = $this->getHeaders('PUT', $headers, $object);
     $curl = ch_curl($url, 'PUT', $headers, $file, NULL, 200);
-    if ($curl === 200) print_msg(sprintf('Upload of file %s to S3 successful. URL is %s (%s)', $file, $url, isset($this->options['store_public']) && $public ? 'URL is publicly accessible' : 'URL is private'), isset($this->options['verbose']), __FILE__, __LINE__);
+    if ($curl === 200) {
+      print_msg(sprintf('Upload of file %s to S3 successful. URL is %s (%s)', $file, $url, isset($this->options['store_public']) && $public ? 'URL is publicly accessible' : 'URL is private'), isset($this->options['verbose']), __FILE__, __LINE__);
+    }
     else {
       $url = NULL;
       print_msg(sprintf('Upload of file %s to S3 failed', $file), isset($this->options['verbose']), __FILE__, __LINE__, TRUE);
     }
-    return $url && $public ? $this->getUrl($object, NULL, FALSE) : $url;
+    // Use DNS style path
+    if ($url && $public && preg_match('/^(https?:\/\/)([^\/]+)\/([^\/]+)\//', $url, $m)) {
+      $url = str_replace($m[0], sprintf('%s%s.%s/', $m[1], $m[3], $m[2]), $url);
+      print_msg(sprintf('Returning DNS URL %s', $url), isset($this->options['verbose']), __FILE__, __LINE__);
+    }
+    return $url;
   }
   
   /**
