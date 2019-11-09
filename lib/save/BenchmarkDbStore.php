@@ -24,7 +24,9 @@ class BenchmarkDbStore extends BenchmarkDb {
    * the BenchmarkDb::getDb static method
    * @param array $options db command line arguments
    */
-  protected function BenchmarkDbStore($options) {}
+  protected function BenchmarkDbStore($options) {
+	 $this->stripCsvQuotes = TRUE;
+  }
 
   
   /**
