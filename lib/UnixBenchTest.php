@@ -244,8 +244,8 @@ class UnixBenchTest {
       // create runs cript
       fwrite($fp, "#!/bin/bash\n");
       fwrite($fp, sprintf("cd %s\n", $this->options['unixbench_dir']));
-      // increase copy limit from 16 to 128 (if not already changed)
-      fwrite($fp, "sed -i 's/=> 16/=> 128/g' Run\n");
+      // increase copy limit from 16 to 640 (if not already changed)
+      fwrite($fp, "sed -i 's/=> 16/=> 640/g' Run\n");
       fwrite($fp, sprintf("./Run%s%s %s >%s 2>>%s\n", isset($this->options['nosinglethread']) ? '' : ' -c 1', isset($this->options['nomultithread']) && $this->options['multicore_copies'] > 1 ? '' : ' -c ' . $this->options['multicore_copies'], implode(' ', $this->options['test']), $ofile, $efile));
       fwrite($fp, sprintf("echo \$? >%s\n", $xfile));
       fclose($fp);
@@ -317,7 +317,7 @@ class UnixBenchTest {
   public function validateRunOptions() {
     $this->getRunOptions();
     $validate = array(
-      'multicore_copies' => array('min' => 1, 'max' => 128),
+      'multicore_copies' => array('min' => 1, 'max' => 640),
       'output' => array('required' => TRUE, 'write' => TRUE),
       'test' => array('option' => explode(' ', self::UNIX_BENCH_TESTS), 'required' => TRUE)
     );
